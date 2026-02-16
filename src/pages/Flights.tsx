@@ -80,9 +80,9 @@ export function Flights() {
     return entries
   }, [people, clubs])
 
-  // Filter by tab
+  // Filter by tab (tab is plural 'arrivals'/'departures', type is singular)
   const filtered = useMemo(
-    () => flights.filter((f) => f.type === tab),
+    () => flights.filter((f) => f.type === (tab === 'arrivals' ? 'arrival' : 'departure')),
     [flights, tab]
   )
 
