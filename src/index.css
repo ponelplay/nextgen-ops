@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  /* NextGen brand — fresh green/lime identity */
+  --color-ng-green: #78BE20;
+  --color-ng-green-light: #8FD430;
+  --color-ng-green-dark: #5A9A10;
+
+  /* EuroLeague parent brand */
+  --color-el-orange: #f26522;
+
+  /* Dark theme — super readable */
+  --color-ng-bg: #0a0f1a;
+  --color-ng-surface: #111827;
+  --color-ng-card: #1a2236;
+  --color-ng-card-hover: #1f2b42;
+  --color-ng-border: #2a3650;
+  --color-ng-border-light: #374766;
+  --color-ng-muted: #94a3b8;
+  --color-ng-text: #e2e8f0;
+  --color-ng-text-dim: #64748b;
+}
+
+html, body, #root {
+  height: 100%;
+  overscroll-behavior: none;
+  background: var(--color-ng-bg);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Crest images on dark bg — ensure visibility */
+.crest-img {
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.15));
+}
