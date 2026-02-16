@@ -12,6 +12,7 @@ import { Transfers } from './pages/Transfers'
 import { Tasks } from './pages/Tasks'
 import { People } from './pages/People'
 import { Flights } from './pages/Flights'
+import { Schedule } from './pages/Schedule'
 import { TournamentContext } from './hooks/useTournament'
 import { TOURNAMENTS } from './data/tournaments'
 
@@ -37,6 +38,7 @@ function App() {
                   <Route path="teams" element={<Teams />} />
                   <Route path="contacts" element={<Contacts />} />
                   <Route path="flights" element={<Flights />} />
+                  <Route path="schedule" element={<Schedule />} />
                   <Route path="transfers" element={<Transfers />} />
                   <Route path="tasks" element={<Tasks />} />
                 </Route>

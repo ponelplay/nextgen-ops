@@ -104,6 +104,45 @@ export const TOURNAMENTS: Tournament[] = [
   },
 ]
 
+// === Practice schedule per tournament ===
+// Thursday practice day — one slot per team, times TBD until Andrea confirms
+export interface PracticeSlot {
+  date: string
+  localTime: string // empty = TBD
+  endTime: string   // empty = TBD
+  teamName: string
+  clubCode: string
+  venue: string
+}
+
+export const PRACTICE_SCHEDULES: Record<string, PracticeSlot[]> = {
+  'abu-dhabi-2026': [
+    // Thursday Feb 26 — practice day (times TBD)
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+    { date: '2026-02-26', localTime: '', endTime: '', teamName: 'TBD', clubCode: '', venue: 'SPACE42' },
+  ],
+  'bologna-2026': [],
+  'belgrade-2026': [],
+}
+
+// === Standard route templates for auto-generating transfers ===
+export function getLocationNames(tournamentId: string) {
+  const places = PLACES[tournamentId] || []
+  const venue = places.find((p) => p.type === 'venue')?.name || 'Venue'
+  const airport = places.find((p) => p.type === 'airport')?.name || 'Airport'
+  const teamHotel = places.find((p) => p.type === 'hotel' && p.notes?.toLowerCase().includes('team'))?.name
+    || places.find((p) => p.type === 'hotel')?.name || 'Hotel'
+  const staffHotel = places.find((p) => p.type === 'hotel' && p.notes?.toLowerCase().includes('staff'))?.name
+    || teamHotel
+  return { venue, airport, teamHotel, staffHotel }
+}
+
 // Sunday knockout schedule — known times, matchups TBD based on group results
 // These are shown in the app alongside API games
 export interface KnockoutSlot {

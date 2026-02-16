@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Plane,
   CheckSquare,
+  CalendarClock,
   ChevronDown,
   LogOut,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/people', icon: UserCircle, label: 'People' },
   { to: '/contacts', icon: Users, label: 'Contacts' },
   { to: '/flights', icon: Plane, label: 'Flights' },
+  { to: '/schedule', icon: CalendarClock, label: 'Schedule' },
   { to: '/tasks', icon: CheckSquare, label: 'Tasks' },
 ]
 
@@ -95,12 +97,12 @@ export function Layout() {
                 to === '/'
                   ? location.pathname === '/'
                   : location.pathname.startsWith(to)
-              return `flex flex-1 flex-col items-center gap-0.5 py-2 text-xs ${
+              return `flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] ${
                 isActive ? 'text-ng-green' : 'text-ng-text-dim'
               }`
             }}
           >
-            <Icon size={20} />
+            <Icon size={18} />
             <span>{label}</span>
           </NavLink>
         ))}

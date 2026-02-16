@@ -172,7 +172,7 @@ function TransferCard({
         <div className="flex items-center gap-2">
           <Clock size={14} className="text-ng-green" />
           <span className="font-bold text-ng-green">{transfer.time}</span>
-          <span className="text-sm font-medium">{transfer.teamName || 'Staff'}</span>
+          <span className="text-sm font-medium">{transfer.teamName || 'EL Staff'}</span>
         </div>
         {transfer.pax > 0 && (
           <span className="flex items-center gap-1 text-xs text-slate-400">

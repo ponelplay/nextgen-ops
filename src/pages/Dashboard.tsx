@@ -35,7 +35,9 @@ export function Dashboard() {
       .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime())
   }, [games, tomorrowStr, tournament.timezone])
 
-  const todaysTransfers = transfers.filter((t) => t.date === todayStr)
+  const todaysTransfers = transfers
+    .filter((t) => t.date === todayStr)
+    .sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
   const pendingTasks = tasks.filter((t) => !t.completed).slice(0, 5)
   const todaysEvents = events.filter((e) => e.date === todayStr)
 

@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Trophy } from 'lucide-react'
+import { Trophy, Dumbbell } from 'lucide-react'
 import { useTournament } from '../hooks/useTournament'
 import { useGames } from '../hooks/useGames'
 import { GameCard } from '../components/GameCard'
 import { formatLocalDate, formatDisplayDate } from '../utils/time'
-import { ABU_DHABI_KNOCKOUTS, type KnockoutSlot } from '../data/tournaments'
+import { ABU_DHABI_KNOCKOUTS, PRACTICE_SCHEDULES, type KnockoutSlot, type PracticeSlot } from '../data/tournaments'
 import type { ApiGame } from '../types'
 
 export function Games() {
@@ -18,6 +18,13 @@ export function Games() {
 
   // Get knockout slots for this tournament (only Abu Dhabi for now)
   const knockoutSlots = tournament.id === 'abu-dhabi-2026' ? ABU_DHABI_KNOCKOUTS : []
+
+  // Practice slots
+  const practiceSlots = PRACTICE_SCHEDULES[tournament.id] || []
+  const practiceDates = useMemo(() => {
+    const dates = new Set(practiceSlots.map((p) => p.date))
+    return Array.from(dates).sort()
+  }, [practiceSlots])
 
   // Knockout dates that DON'T have API games yet (show placeholders)
   const knockoutDatesWithoutApi = useMemo(() => {
@@ -90,6 +97,28 @@ export function Games() {
         </div>
       </div>
 
+      {/* Practice day (before games start) */}
+      {!groupFilter &&
+        practiceDates.map((date) => (
+          <div key={`prac-${date}`} className="mb-6">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-ng-green">
+              <Dumbbell size={14} />
+              {formatDisplayDate(date)} — Practices
+            </h2>
+            <div className="space-y-2">
+              {practiceSlots
+                .filter((p) => p.date === date)
+                .sort((a, b) => (a.localTime || '99:99').localeCompare(b.localTime || '99:99'))
+                .map((slot, i) => (
+                  <PracticeCard key={`${slot.date}-${i}`} slot={slot} />
+                ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Practice times and teams will be confirmed closer to the event
+            </p>
+          </div>
+        ))}
+
       {/* API games by date */}
       {Array.from(gamesByDate.entries()).map(([date, dayGames]) => (
         <div key={date} className="mb-6">
@@ -160,6 +189,36 @@ function KnockoutPlaceholder({ slot }: { slot: KnockoutSlot }) {
       </div>
       <div className="mt-2 text-center text-xs text-slate-500">
         TBD vs TBD
+      </div>
+    </div>
+  )
+}
+
+function PracticeCard({ slot }: { slot: PracticeSlot }) {
+  return (
+    <div className="rounded-xl border border-ng-border bg-ng-card p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
+            <Dumbbell size={16} className="text-amber-400" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-white">{slot.teamName}</div>
+            <div className="text-xs text-slate-400">{slot.venue}</div>
+          </div>
+        </div>
+        <div className="text-right">
+          {slot.localTime ? (
+            <>
+              <div className="text-lg font-bold text-amber-400">{slot.localTime}</div>
+              {slot.endTime && (
+                <div className="text-xs text-slate-400">to {slot.endTime}</div>
+              )}
+            </>
+          ) : (
+            <div className="text-sm text-slate-500">Time TBD</div>
+          )}
+        </div>
       </div>
     </div>
   )
