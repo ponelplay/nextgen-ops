@@ -313,7 +313,7 @@ export function People() {
 }
 
 function PersonRow({ person, onTap }: { person: Person; onTap: () => void }) {
-  const hasAlert = person.allergies || person.medicalNotes
+  const hasAlert = person.allergies || person.medicalNotes || person.dietaryNeeds
   return (
     <button
       onClick={onTap}
@@ -428,7 +428,7 @@ function PersonDetail({
         )}
 
         {/* Alerts */}
-        {(person.allergies || person.medicalNotes) && (
+        {(person.allergies || person.medicalNotes || person.dietaryNeeds) && (
           <div className="rounded-lg border border-amber-800 bg-amber-900/20 p-3">
             <div className="mb-1 flex items-center gap-1 text-sm font-medium text-amber-400">
               <AlertTriangle size={14} /> Health Info
