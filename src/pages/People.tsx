@@ -14,6 +14,8 @@ import {
   Copy,
   Check,
   Loader2,
+  Send,
+  ClipboardCopy,
 } from 'lucide-react'
 import { useTournament } from '../hooks/useTournament'
 import { useClubs } from '../hooks/useGames'
@@ -91,6 +93,7 @@ export function People() {
   const [isNew, setIsNew] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
   const [showCopy, setShowCopy] = useState(false)
+  const [showMessage, setShowMessage] = useState(false)
 
   // Group options: Staff + each club
   const groupOptions = useMemo(() => {
@@ -152,13 +155,20 @@ export function People() {
         <h1 className="text-lg font-bold">People</h1>
         <div className="flex gap-2">
           {filtered.length > 0 && (
-            <button
-              onClick={() => setShowCopy(true)}
-              className="flex items-center gap-1 rounded-lg border border-ng-border bg-ng-card px-3 py-2 text-sm font-medium text-slate-300 active:bg-slate-700"
-            >
-              <Copy size={14} />
-              Copy to…
-            </button>
+            <>
+              <button
+                onClick={() => setShowMessage(true)}
+                className="flex items-center gap-1 rounded-lg border border-ng-border bg-ng-card px-3 py-2 text-sm font-medium text-slate-300 active:bg-slate-700"
+              >
+                <Send size={14} />
+              </button>
+              <button
+                onClick={() => setShowCopy(true)}
+                className="flex items-center gap-1 rounded-lg border border-ng-border bg-ng-card px-3 py-2 text-sm font-medium text-slate-300 active:bg-slate-700"
+              >
+                <Copy size={14} />
+              </button>
+            </>
           )}
           <button
             onClick={() => {
@@ -306,6 +316,14 @@ export function People() {
           people={filtered}
           currentTournamentId={tournament.id}
           onClose={() => setShowCopy(false)}
+        />
+      )}
+
+      {/* Group message modal */}
+      {showMessage && (
+        <MessageModal
+          people={people}
+          onClose={() => setShowMessage(false)}
         />
       )}
     </div>
@@ -842,6 +860,168 @@ function CopyModal({
           >
             Done
           </button>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+// === Group Message Modal ===
+
+const MESSAGE_GROUPS: { key: string; label: string; filter: (p: Person) => boolean }[] = [
+  { key: 'all_staff', label: 'All Staff', filter: (p) => p.clubCode === 'STAFF' },
+  { key: 'delegates', label: 'All Delegates', filter: (p) => p.role === 'delegate' },
+  { key: 'team_managers', label: 'All Team Managers', filter: (p) => p.role === 'team_manager' },
+  { key: 'head_coaches', label: 'All Head Coaches', filter: (p) => p.role === 'head_coach' },
+  { key: 'coaches', label: 'All Coaches', filter: (p) => p.role === 'head_coach' || p.role === 'assistant_coach' },
+  { key: 'key_contacts', label: 'All Key Contacts', filter: (p) => isKeyContact(p.role) },
+  { key: 'physios', label: 'All Physios & Doctors', filter: (p) => p.role === 'physio' || p.role === 'doctor' },
+  { key: 'everyone', label: 'Everyone', filter: () => true },
+]
+
+function MessageModal({
+  people,
+  onClose,
+}: {
+  people: Person[]
+  onClose: () => void
+}) {
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
+  const [copiedEmails, setCopiedEmails] = useState(false)
+  const [copiedPhones, setCopiedPhones] = useState(false)
+
+  const groupDef = MESSAGE_GROUPS.find((g) => g.key === selectedGroup)
+  const recipients = groupDef ? people.filter(groupDef.filter).filter((p) => p.email || p.whatsapp || p.phone) : []
+
+  const emails = recipients.filter((p) => p.email).map((p) => p.email)
+  const whatsappPeople = recipients.filter((p) => p.whatsapp)
+
+  const copyEmails = () => {
+    navigator.clipboard.writeText(emails.join('; '))
+    setCopiedEmails(true)
+    setTimeout(() => setCopiedEmails(false), 2000)
+  }
+
+  const copyPhones = () => {
+    const phones = whatsappPeople.map((p) => `${p.name}: ${p.whatsapp}`).join('\n')
+    navigator.clipboard.writeText(phones)
+    setCopiedPhones(true)
+    setTimeout(() => setCopiedPhones(false), 2000)
+  }
+
+  return (
+    <Modal open title="Group Message" onClose={onClose}>
+      {!selectedGroup ? (
+        <div className="space-y-2">
+          <p className="mb-3 text-sm text-slate-400">
+            Select a group to message:
+          </p>
+          {MESSAGE_GROUPS.map((group) => {
+            const count = people.filter(group.filter).filter((p) => p.email || p.whatsapp || p.phone).length
+            return (
+              <button
+                key={group.key}
+                onClick={() => count > 0 ? setSelectedGroup(group.key) : undefined}
+                disabled={count === 0}
+                className={`flex w-full items-center justify-between rounded-lg border border-ng-border px-4 py-3 text-left ${
+                  count > 0 ? 'bg-ng-card active:bg-slate-700' : 'bg-ng-card/50 opacity-50'
+                }`}
+              >
+                <span className="text-sm font-medium">{group.label}</span>
+                <span className="rounded-full bg-ng-surface px-2 py-0.5 text-xs text-slate-400">
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <button
+            onClick={() => setSelectedGroup(null)}
+            className="text-sm text-slate-400 hover:text-white"
+          >
+            ← Back to groups
+          </button>
+
+          <div>
+            <h3 className="mb-1 text-sm font-semibold text-ng-green">
+              {groupDef?.label} ({recipients.length})
+            </h3>
+            <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-ng-border bg-ng-card p-2">
+              {recipients.map((p) => (
+                <div key={p.id} className="flex items-center gap-2 text-xs">
+                  <span className="flex-1 font-medium">{p.name}</span>
+                  {p.email && <Mail size={10} className="text-purple-400" />}
+                  {p.whatsapp && <MessageCircle size={10} className="text-green-400" />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Email section */}
+          {emails.length > 0 && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-slate-300">
+                  Email ({emails.length})
+                </h4>
+                <button
+                  onClick={copyEmails}
+                  className="flex items-center gap-1 rounded-lg bg-purple-600/20 px-3 py-1.5 text-xs font-medium text-purple-400 active:bg-purple-600/40"
+                >
+                  {copiedEmails ? <Check size={12} /> : <ClipboardCopy size={12} />}
+                  {copiedEmails ? 'Copied!' : 'Copy all emails'}
+                </button>
+              </div>
+              <div className="rounded-lg border border-ng-border bg-ng-card p-2 text-xs text-slate-300 break-all">
+                {emails.join('; ')}
+              </div>
+              <button
+                onClick={() => openEmail(emails.join(';'))}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600/20 py-2.5 text-sm font-medium text-purple-400 active:bg-purple-600/40"
+              >
+                <Mail size={16} /> Open email with all recipients
+              </button>
+            </div>
+          )}
+
+          {/* WhatsApp section */}
+          {whatsappPeople.length > 0 && (
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-slate-300">
+                  WhatsApp ({whatsappPeople.length})
+                </h4>
+                <button
+                  onClick={copyPhones}
+                  className="flex items-center gap-1 rounded-lg bg-green-600/20 px-3 py-1.5 text-xs font-medium text-green-400 active:bg-green-600/40"
+                >
+                  {copiedPhones ? <Check size={12} /> : <ClipboardCopy size={12} />}
+                  {copiedPhones ? 'Copied!' : 'Copy numbers'}
+                </button>
+              </div>
+              <div className="space-y-1">
+                {whatsappPeople.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between rounded-lg border border-ng-border bg-ng-card px-3 py-2"
+                  >
+                    <div>
+                      <div className="text-sm font-medium">{p.name}</div>
+                      <div className="text-xs text-slate-400">{p.whatsapp}</div>
+                    </div>
+                    <button
+                      onClick={() => openWhatsApp(p.whatsapp)}
+                      className="flex items-center gap-1 rounded-lg bg-green-600/20 px-3 py-1.5 text-xs text-green-400 active:bg-green-600/40"
+                    >
+                      <MessageCircle size={12} /> Chat
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Modal>
