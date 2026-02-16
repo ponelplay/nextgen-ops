@@ -11,6 +11,9 @@ import {
   Shield,
   AlertTriangle,
   Users,
+  Copy,
+  Check,
+  Loader2,
 } from 'lucide-react'
 import { useTournament } from '../hooks/useTournament'
 import { useClubs } from '../hooks/useGames'
@@ -18,6 +21,8 @@ import { useSupabaseData } from '../hooks/useSupabaseData'
 import { Modal, FormField, inputClass, selectClass } from '../components/Modal'
 import { openWhatsApp, openPhone, openEmail } from '../utils/communication'
 import { displayName } from '../utils/teams'
+import { fetchAll, insertRow } from '../lib/supabase-data'
+import { TOURNAMENTS } from '../data/tournaments'
 import type { Person, PersonRole } from '../types'
 import { isKeyContact } from '../types'
 
@@ -84,6 +89,7 @@ export function People() {
   const [editing, setEditing] = useState<Person | null>(null)
   const [isNew, setIsNew] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null)
+  const [showCopy, setShowCopy] = useState(false)
 
   // Group options: Staff + each club
   const groupOptions = useMemo(() => {
@@ -143,21 +149,32 @@ export function People() {
     <div className="p-4">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-bold">People</h1>
-        <button
-          onClick={() => {
-            setEditing({
-              ...EMPTY_PERSON,
-              id: '',
-              tournamentId: tournament.id,
-              clubCode: clubFilter || 'STAFF',
-            } as Person)
-            setIsNew(true)
-          }}
-          className="flex items-center gap-1 rounded-lg bg-ng-green px-3 py-2 text-sm font-medium text-white active:bg-ng-green-dark"
-        >
-          <Plus size={16} />
-          Add
-        </button>
+        <div className="flex gap-2">
+          {filtered.length > 0 && (
+            <button
+              onClick={() => setShowCopy(true)}
+              className="flex items-center gap-1 rounded-lg border border-ng-border bg-ng-card px-3 py-2 text-sm font-medium text-slate-300 active:bg-slate-700"
+            >
+              <Copy size={14} />
+              Copy to…
+            </button>
+          )}
+          <button
+            onClick={() => {
+              setEditing({
+                ...EMPTY_PERSON,
+                id: '',
+                tournamentId: tournament.id,
+                clubCode: clubFilter || 'STAFF',
+              } as Person)
+              setIsNew(true)
+            }}
+            className="flex items-center gap-1 rounded-lg bg-ng-green px-3 py-2 text-sm font-medium text-white active:bg-ng-green-dark"
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -279,6 +296,15 @@ export function People() {
             }
             setEditing(null)
           }}
+        />
+      )}
+
+      {/* Copy to tournament modal */}
+      {showCopy && (
+        <CopyModal
+          people={filtered}
+          currentTournamentId={tournament.id}
+          onClose={() => setShowCopy(false)}
         />
       )}
     </div>
@@ -667,6 +693,156 @@ function PersonFormModal({
       >
         {isNew ? 'Add Person' : 'Save Changes'}
       </button>
+    </Modal>
+  )
+}
+
+function CopyModal({
+  people,
+  currentTournamentId,
+  onClose,
+}: {
+  people: Person[]
+  currentTournamentId: string
+  onClose: () => void
+}) {
+  const otherTournaments = TOURNAMENTS.filter((t) => t.id !== currentTournamentId)
+  const [targetId, setTargetId] = useState<string | null>(null)
+  const [status, setStatus] = useState<'pick' | 'loading' | 'done'>('pick')
+  const [result, setResult] = useState({ copied: 0, skipped: 0 })
+
+  const handleCopy = async () => {
+    if (!targetId) return
+    setStatus('loading')
+
+    // Fetch existing people in target tournament to avoid duplicates
+    const existing = await fetchAll<Person>('people', targetId)
+    const existingKeys = new Set(existing.map((p) => `${p.name}::${p.clubCode}`))
+
+    let copied = 0
+    let skipped = 0
+
+    for (const person of people) {
+      const key = `${person.name}::${person.clubCode}`
+      if (existingKeys.has(key)) {
+        skipped++
+        continue
+      }
+
+      const payload: Omit<Person, 'id'> = {
+        tournamentId: targetId,
+        teamId: person.teamId,
+        clubCode: person.clubCode,
+        name: person.name,
+        role: person.role,
+        nationality: person.nationality,
+        passportNumber: person.passportNumber,
+        passportExpiry: person.passportExpiry,
+        dateOfBirth: person.dateOfBirth,
+        phone: person.phone,
+        email: person.email,
+        whatsapp: person.whatsapp,
+        allergies: person.allergies,
+        dietaryNeeds: person.dietaryNeeds,
+        medicalNotes: person.medicalNotes,
+        shirtSize: person.shirtSize,
+        notes: person.notes,
+        // Clear tournament-specific fields
+        arrivalDate: '',
+        arrivalTime: '',
+        arrivalFlight: '',
+        departureDate: '',
+        departureTime: '',
+        departureFlight: '',
+        hotel: '',
+        roomNumber: '',
+        roomType: '',
+      }
+
+      try {
+        await insertRow<Person>('people', payload)
+        copied++
+      } catch {
+        // Skip on error (e.g. constraint violation)
+        skipped++
+      }
+    }
+
+    setResult({ copied, skipped })
+    setStatus('done')
+  }
+
+  const target = otherTournaments.find((t) => t.id === targetId)
+
+  return (
+    <Modal open title="Copy People" onClose={onClose}>
+      {status === 'pick' && (
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Copy <span className="font-semibold text-white">{people.length} people</span> to another tournament.
+            Personal info will be kept, travel & hotel details will be cleared.
+          </p>
+
+          <div className="space-y-2">
+            {otherTournaments.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTargetId(t.id)}
+                className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left ${
+                  targetId === t.id
+                    ? 'border-ng-green bg-ng-green/10'
+                    : 'border-ng-border bg-ng-card'
+                }`}
+              >
+                <div className="flex-1">
+                  <div className="text-sm font-semibold">{t.name}</div>
+                  <div className="text-xs text-slate-400">{t.city} · {t.startDate}</div>
+                </div>
+                {targetId === t.id && <Check size={16} className="text-ng-green" />}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleCopy}
+            disabled={!targetId}
+            className={`w-full rounded-lg py-2.5 text-sm font-semibold ${
+              targetId
+                ? 'bg-ng-green text-white active:bg-ng-green-dark'
+                : 'bg-ng-card text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            Copy {people.length} people to {target?.city || '…'}
+          </button>
+        </div>
+      )}
+
+      {status === 'loading' && (
+        <div className="flex flex-col items-center gap-3 py-8">
+          <Loader2 size={24} className="animate-spin text-ng-green" />
+          <p className="text-sm text-slate-400">Copying people to {target?.name}…</p>
+        </div>
+      )}
+
+      {status === 'done' && (
+        <div className="space-y-4">
+          <div className="flex flex-col items-center gap-2 py-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ng-green/20">
+              <Check size={24} className="text-ng-green" />
+            </div>
+            <p className="text-lg font-bold text-white">{result.copied} copied</p>
+            {result.skipped > 0 && (
+              <p className="text-sm text-slate-400">{result.skipped} skipped (already exist)</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full rounded-lg bg-ng-green py-2.5 text-sm font-semibold text-white active:bg-ng-green-dark"
+          >
+            Done
+          </button>
+        </div>
+      )}
     </Modal>
   )
 }
