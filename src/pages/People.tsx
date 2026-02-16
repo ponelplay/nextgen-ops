@@ -45,6 +45,7 @@ const STAFF_ROLES: { value: PersonRole; label: string }[] = [
   { value: 'staff_officiating', label: 'Officiating' },
   { value: 'staff_referee', label: 'Referee Dept' },
   { value: 'staff_media', label: 'Media' },
+  { value: 'staff_commercial', label: 'Commercial' },
   { value: 'staff_it', label: 'IT' },
   { value: 'staff_other', label: 'Other' },
 ]

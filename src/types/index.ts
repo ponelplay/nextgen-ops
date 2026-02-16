@@ -147,6 +147,7 @@ export type PersonRole =
   | 'staff_competition'
   | 'staff_officiating'
   | 'staff_media'
+  | 'staff_commercial'
   | 'staff_it'
   | 'staff_other'
 
