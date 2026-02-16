@@ -1,9 +1,24 @@
 import { useState, useMemo } from 'react'
-import { Plus, Search } from 'lucide-react'
+import {
+  Plus,
+  Search,
+  MapPin,
+  Phone,
+  Building2,
+  Hotel,
+  Cross,
+  Car,
+  Plane,
+  Navigation,
+  UtensilsCrossed,
+  HelpCircle,
+} from 'lucide-react'
 import { useTournament } from '../hooks/useTournament'
 import { useSupabaseData } from '../hooks/useSupabaseData'
 import { ContactCard } from '../components/ContactCard'
 import { Modal, FormField, inputClass, selectClass } from '../components/Modal'
+import { openPhone } from '../utils/communication'
+import { PLACES, type Place } from '../data/tournaments'
 import type { Contact, ContactRole } from '../types'
 
 const ROLES: ContactRole[] = ['staff', 'organization', 'hotel', 'transport', 'team', 'venue', 'catering', 'other']
@@ -48,6 +63,8 @@ export function Contacts() {
     return ROLES.filter((r) => set.has(r))
   }, [contacts])
 
+  const places = PLACES[tournament.id] || []
+
   return (
     <div className="p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -63,6 +80,20 @@ export function Contacts() {
           Add
         </button>
       </div>
+
+      {/* Key Places */}
+      {places.length > 0 && (
+        <div className="mb-5">
+          <h2 className="mb-2 text-sm font-semibold text-slate-300">Key Places</h2>
+          <div className="grid grid-cols-2 gap-2">
+            {places.map((place) => (
+              <PlaceCard key={place.name} place={place} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="mb-2 text-sm font-semibold text-slate-300">People</h2>
 
       {/* Search */}
       <div className="relative mb-3">
@@ -203,5 +234,55 @@ function ContactFormModal({
         {isNew ? 'Add Contact' : 'Save Changes'}
       </button>
     </Modal>
+  )
+}
+
+const PLACE_ICONS: Record<Place['type'], React.ReactNode> = {
+  venue: <Building2 size={16} className="text-ng-green" />,
+  hotel: <Hotel size={16} className="text-blue-400" />,
+  hospital: <Cross size={16} className="text-red-400" />,
+  transport: <Car size={16} className="text-amber-400" />,
+  airport: <Plane size={16} className="text-cyan-400" />,
+  restaurant: <UtensilsCrossed size={16} className="text-orange-400" />,
+  other: <HelpCircle size={16} className="text-slate-400" />,
+}
+
+function PlaceCard({ place }: { place: Place }) {
+  return (
+    <div className="rounded-xl border border-ng-border bg-ng-card p-3">
+      <div className="mb-1.5 flex items-center gap-2">
+        {PLACE_ICONS[place.type]}
+        <span className="text-sm font-semibold text-white">{place.name}</span>
+      </div>
+      {place.notes && (
+        <p className="mb-2 text-xs text-slate-400">{place.notes}</p>
+      )}
+      <div className="flex flex-wrap gap-1.5">
+        {place.phone && (
+          <button
+            onClick={() => openPhone(place.phone)}
+            className="flex items-center gap-1 rounded-md bg-ng-surface px-2 py-1 text-xs text-slate-300 active:bg-slate-700"
+          >
+            <Phone size={10} /> Call
+          </button>
+        )}
+        {place.mapsUrl && (
+          <a
+            href={place.mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 rounded-md bg-ng-surface px-2 py-1 text-xs text-slate-300 active:bg-slate-700"
+          >
+            <Navigation size={10} /> Map
+          </a>
+        )}
+      </div>
+      {place.address && (
+        <div className="mt-1.5 flex items-start gap-1 text-xs text-slate-500">
+          <MapPin size={10} className="mt-0.5 shrink-0" />
+          <span>{place.address}</span>
+        </div>
+      )}
+    </div>
   )
 }

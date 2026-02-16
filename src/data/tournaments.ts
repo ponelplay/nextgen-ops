@@ -1,5 +1,70 @@
 import type { Tournament } from '../types'
 
+// === Key Places per tournament ===
+export interface Place {
+  name: string
+  type: 'venue' | 'hotel' | 'hospital' | 'transport' | 'restaurant' | 'airport' | 'other'
+  address: string
+  phone: string
+  mapsUrl: string // Google Maps link
+  notes: string
+}
+
+export const PLACES: Record<string, Place[]> = {
+  'abu-dhabi-2026': [
+    {
+      name: 'SPACE42 Arena',
+      type: 'venue',
+      address: 'Yas Island, Abu Dhabi, UAE',
+      phone: '',
+      mapsUrl: 'https://maps.google.com/?q=SPACE42+Arena+Yas+Island+Abu+Dhabi',
+      notes: 'Main venue for all games',
+    },
+    {
+      name: 'W Abu Dhabi - Yas Island',
+      type: 'hotel',
+      address: 'Yas Island, Abu Dhabi, UAE',
+      phone: '+971-2-656-0000',
+      mapsUrl: 'https://maps.google.com/?q=W+Abu+Dhabi+Yas+Island',
+      notes: 'Teams hotel (TBC)',
+    },
+    {
+      name: 'Hilton Abu Dhabi Yas Island',
+      type: 'hotel',
+      address: 'Yas Island, Abu Dhabi, UAE',
+      phone: '+971-2-208-6000',
+      mapsUrl: 'https://maps.google.com/?q=Hilton+Abu+Dhabi+Yas+Island',
+      notes: 'Staff hotel (TBC)',
+    },
+    {
+      name: 'Abu Dhabi International Airport (AUH)',
+      type: 'airport',
+      address: 'Abu Dhabi, UAE',
+      phone: '+971-2-505-5555',
+      mapsUrl: 'https://maps.google.com/?q=Abu+Dhabi+International+Airport',
+      notes: 'Main airport · Terminal A (new)',
+    },
+    {
+      name: 'Cleveland Clinic Abu Dhabi',
+      type: 'hospital',
+      address: 'Al Maryah Island, Abu Dhabi, UAE',
+      phone: '+971-2-501-9000',
+      mapsUrl: 'https://maps.google.com/?q=Cleveland+Clinic+Abu+Dhabi',
+      notes: 'Nearest major hospital',
+    },
+    {
+      name: 'Abu Dhabi Taxi (TransAD)',
+      type: 'transport',
+      address: '',
+      phone: '+971-600-535353',
+      mapsUrl: '',
+      notes: 'Official taxi service · Also use Careem/Uber apps',
+    },
+  ],
+  'bologna-2026': [],
+  'belgrade-2026': [],
+}
+
 export const TOURNAMENTS: Tournament[] = [
   {
     id: 'abu-dhabi-2026',
